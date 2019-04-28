@@ -26,6 +26,7 @@ What things you need to install:
 * [Apache Flex SDK](http://flex.apache.org/installer.html);
 * [Java Development Kit](https://www.oracle.com/technetwork/java/javase/downloads/index.html);
 * [Inno Setup](http://www.jrsoftware.org/isinfo.php) (For OS Windows);
+* [Create DMG](https://github.com/andreyvit/create-dmg) (For Mac OS);
 
 ### Building
 
@@ -60,6 +61,7 @@ package
 * [PurePDF](https://github.com/sephiroth74/purePDF) - purePDF is a complete PDF library for Actionscript.
 * [Tweener](https://github.com/zeh/tweener) - Tweener library for Actionscript.
 * [Inno Setup](http://www.jrsoftware.org/isinfo.php) - Inno Setup is a free installer for Windows programs by Jordan Russell and Martijn Laan.
+* [Create DMG](https://github.com/andreyvit/create-dmg) - A shell script to build fancy DMGs.
 
 ## Versioning
 

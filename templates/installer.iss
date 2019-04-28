@@ -40,8 +40,8 @@ Name: "ukrainian"; MessagesFile: "compiler:Languages\Ukrainian.isl"; InfoBeforeF
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "APP_DIR\dist\temp\bundle\Motivate Clock.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "APP_DIR\dist\temp\bundle\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "BUNDLE_DIR\Motivate Clock.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "BUNDLE_DIR\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]

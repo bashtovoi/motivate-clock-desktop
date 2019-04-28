@@ -4,7 +4,7 @@
 
     <!-- SDK properties -->
     <property name="ADT" value="${FLEX_HOME}/lib/adt.jar"/>
-    <property name="ADL" value="${FLEX_HOME}/bin/adl.exe"/>
+    <property name="ADL" value="${FLEX_HOME}/bin/adl"/>
 
     <!-- points to our flexTasks.jar we copied to the libs folder to distribute with the project -->
     <taskdef resource="flexTasks.tasks" classpath="${FLEX_HOME}/ant/lib/flexTasks.jar"/>
@@ -28,47 +28,60 @@
         <os family="windows"/>
     </condition>
 
-    <target name="start">
+    <target name="start" depends="~start.win, ~start.mac" />
+
+    <target name="package" depends="~package.win, ~package.mac" />
+
+    <target name="~start.mac" if="isMac">
+        <sequential>
+            <serve.debug.dir/>
+            <compile file="${MAIN_CLASS}" output="${DEBUG_DIR}/${APP_NAME}.swf" debug="true"/>
+            <exec executable="/bin/sh">
+                <arg value="-c"/>
+                <arg value="${ADL} ${DEBUG_DIR}/${APP_DESCRIPTOR}"/>
+            </exec>
+        </sequential>
+    </target>
+
+    <target name="~start.win" if="isWindows">
         <sequential>
             <serve.debug.dir/>
             <compile file="${MAIN_CLASS}" output="${DEBUG_DIR}/${APP_NAME}.swf" debug="true"/>
             <exec executable="cmd">
                 <arg value="/c"/>
-                <arg value="${ADL}"/>
+                <arg value="${ADL}.exe"/>
                 <arg value="${DEBUG_DIR}/${APP_DESCRIPTOR}"/>
             </exec>
         </sequential>
     </target>
 
-    <target name="package" depends="package.exe, package.dmg">
-    </target>
-
-    <target name="package.dmg" if="isMac">
+    <target name="~package.mac" if="isMac">
         <sequential>
-            <cleanup dir="${TEMP_DIR}"/>
+            <cleanup dir="${DIST_DIR}"/>
             <create.app.descriptor dir="${TEMP_DIR}" url="${UPDATE_URL}"/>
             <create.update.descriptor url="${UPDATE_URL}"/>
             <compile file="${MAIN_CLASS}" output="${TEMP_DIR}/${APP_NAME}.swf"/>
-            <package.native ext="dmg"/>
-            <sign.dmg file="${DIST_DIR}/motivateclock.dmg"/>
+            <package.bundle dir="${TEMP_DIR}" assets="${ASSETS_MAC}" name="${APP_NAME_LABEL}"/>
+            <package.mac.installer src="${TEMP_DIR}/${APP_NAME_LABEL}.app" out="${DIST_DIR}"/>
+            <sign.dmg file="${DIST_DIR}/${APP_NAME}.dmg"/>
             <delete dir="${TEMP_DIR}"/>
         </sequential>
     </target>
 
-    <target name="package.exe" if="isWindows">
+    <target name="~package.win" if="isWindows">
         <sequential>
-            <cleanup dir="${TEMP_DIR}"/>
+            <cleanup dir="${DIST_DIR}"/>
             <create.app.descriptor dir="${TEMP_DIR}" url="${UPDATE_URL}"/>
             <create.update.descriptor url="${UPDATE_URL}"/>
             <compile file="${MAIN_CLASS}" output="${TEMP_DIR}/${APP_NAME}.swf"/>
-            <package.bundle dir="${TEMP_DIR}"/>
-            <package.installer dir="${TEMP_DIR}"/>
+            <package.bundle dir="${TEMP_DIR}" assets="${ASSETS_WIN}" name="${APP_NAME}"/>
+            <package.win.installer dir="${TEMP_DIR}"/>
             <sign.exe file="${DIST_DIR}/${APP_NAME}.exe"/>
             <delete dir="${TEMP_DIR}"/>
         </sequential>
     </target>
 
-    <macrodef name="package.installer">
+    <macrodef name="package.win.installer">
         <attribute name="dir"/>
         <sequential>
             <copy file="${TEMPLATES_DIR}/${WIN_SETUP_SCRIPT}"
@@ -77,11 +90,27 @@
             <replace file="@{dir}/${WIN_SETUP_SCRIPT}">
                 <replacefilter token="VERSION" value="${APP_VERSION}"/>
                 <replacefilter token="APP_DIR" value="${ABSOLUTE_PATH}"/>
+                <replacefilter token="BUNDLE_DIR" value="${ABSOLUTE_PATH}/${TEMP_DIR}/${APP_NAME}"/>
             </replace>
             <exec executable="cmd">
                 <arg value="/c"/>
                 <arg value="${WIN_INSTALLER_DIR}/ISCC.exe"/>
                 <arg value="${TEMP_DIR}/${WIN_SETUP_SCRIPT}"/>
+            </exec>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="package.mac.installer">
+        <attribute name="src"/>
+        <attribute name="out"/>
+        <sequential>
+            <exec executable="/bin/sh">
+                <arg value="-c"/>
+                <arg value="pwd"/>
+            </exec>
+            <exec executable="/bin/sh">
+                <arg value="-c"/>
+                <arg value="create-dmg --volname '${APP_NAME_LABEL}' --window-size 512 320 --background 'resources/images/dmg-background.png' --icon '${APP_NAME_LABEL}.app' 120 175 --app-drop-link 400 175 '@{out}/${APP_NAME}.dmg' '@{src}'"/>
             </exec>
         </sequential>
     </macrodef>
@@ -96,29 +125,10 @@
         </sequential>
     </macrodef>
 
-    <macrodef name="package.native">
-        <attribute name="ext"/>
-        <sequential>
-            <java jar="${ADT}" fork="true" failonerror="true">
-                <arg value="-package"/>
-                <arg value="-storetype"/>
-                <arg value="${STORETYPE}"/>
-                <arg value="-keystore"/>
-                <arg value="${KEYSTORE}"/>
-                <arg value="-storepass"/>
-                <arg value="${STOREPASS}"/>
-                <arg value="-target"/>
-                <arg value="native"/>
-                <arg value="${DIST_DIR}/${APP_NAME}.@{ext}"/>
-                <arg value="${TEMP_DIR}/${APP_DESCRIPTOR}"/>
-                <arg line="-C ${TEMP_DIR} ${APP_NAME}.swf"/>
-                <arg line="-C ${STATIC_DIR} ${ASSETS_FILELIST}"/>
-            </java>
-        </sequential>
-    </macrodef>
-
     <macrodef name="package.bundle">
         <attribute name="dir"/>
+        <attribute name="assets"/>
+        <attribute name="name"/>
         <sequential>
             <java jar="${ADT}" fork="true" failonerror="true">
                 <arg value="-package"/>
@@ -130,10 +140,10 @@
                 <arg value="${STOREPASS}"/>
                 <arg value="-target"/>
                 <arg value="bundle"/>
-                <arg value="@{dir}/bundle/"/>
+                <arg value="@{dir}/@{name}/"/>
                 <arg value="${TEMP_DIR}/${APP_DESCRIPTOR}"/>
                 <arg line="-C ${TEMP_DIR} ${APP_NAME}.swf"/>
-                <arg line="-C ${STATIC_DIR} ${ASSETS_FILELIST}"/>
+                <arg line="-C ${STATIC_DIR} @{assets}"/>
             </java>
         </sequential>
     </macrodef>
@@ -164,22 +174,6 @@
             <delete includeemptydirs="true" quiet="true">
                 <fileset dir="@{dir}" includes="**/*"/>
             </delete>
-        </sequential>
-    </macrodef>
-
-    <macrodef name="migrate.air">
-        <sequential>
-            <java jar="${ADT}" fork="true" failonerror="true">
-                <arg value="-migrate"/>
-                <arg value="-storetype"/>
-                <arg value="${STORETYPE}"/>
-                <arg value="-keystore"/>
-                <arg value="${OLD_KEYSTORE}"/>
-                <arg value="-storepass"/>
-                <arg value="${OLD_STOREPASS}"/>
-                <arg value="${DIST_DIR}\${APP_NAME}.air"/>
-                <arg value="${DIST_DIR}\${APP_NAME}.air"/>
-            </java>
         </sequential>
     </macrodef>
 

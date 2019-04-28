@@ -11,9 +11,9 @@
 
     <!-- Mac update -->
     <dmg>
-        <version></version>
-        <versionLabel></versionLabel>
-        <url></url>
+        <version>VERSION</version>
+        <versionLabel>VER_LABEL</versionLabel>
+        <url>DOWNLOAD_URL</url>
         <description></description>
     </dmg>
 

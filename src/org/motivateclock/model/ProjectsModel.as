@@ -208,10 +208,13 @@ package org.motivateclock.model
 
         public function createProject(name:String, applications:String = "", id:String = ""):void
         {
+            // tricky way to launch project in auto mode;
+            const process:IProcess = new Process(ProcessTypeEnum.SITE, 'motivateclock.org', 'motivateclock.org');
+
             var project:Project = new Project();
             project.name = name;
             project.creationDate = new Date();
-            project.applications = applications;
+            project.applications = (applications != "") ? applications : process.serialize();
 
             project.id = (id != "") ? id : new Date().getTime().toString();
 
@@ -280,9 +283,7 @@ package org.motivateclock.model
 
         private function createFirstProject():void
         {
-            // tricky way to launch project in auto mode;
-            const process:IProcess = new Process(ProcessTypeEnum.SITE, 'motivateclock.org', 'motivateclock.org');
-            createProject(_model.languageModel.getText(TextKeyEnum.PROJECT_FIRST), process.serialize());
+            createProject(_model.languageModel.getText(TextKeyEnum.PROJECT_FIRST));
         }
 
         private function updateHandler(event:Event):void
